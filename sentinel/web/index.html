@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARGUS // Verification Node</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #050505;
+            color: #00ff41;
+        }
+
+        .scan-line {
+            width: 100%;
+            height: 2px;
+            background: rgba(0, 255, 65, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            animation: scan 3s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes scan {
+            0% {
+                top: 0%;
+            }
+
+            100% {
+                top: 100%;
+            }
+        }
+
+        .cyber-border {
+            border: 1px solid #00ff41;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+        }
+
+        .fail-mode {
+            color: #ff003c;
+            border-color: #ff003c;
+            box-shadow: 0 0 10px rgba(255, 0, 60, 0.2);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen p-8 flex flex-col items-center">
+    <div class="scan-line"></div>
+
+    <header class="w-full max-w-4xl mb-12 flex justify-between items-end border-b border-[#00ff41] pb-4">
+        <div>
+            <h1 class="text-4xl font-bold tracking-tighter">ARGUS_EYE</h1>
+            <p class="text-xs opacity-70">TRUST NOTHING. SEE EVERYTHING.</p>
+        </div>
+        <div class="text-xs text-right opacity-70">
+            SYSTEM: <span class="text-green-400 animate-pulse">WATCHING</span><br>
+            NODE: LOCALHOST
+        </div>
+    </header>
+
+    <main class="w-full max-w-4xl space-y-8">
+        <!-- Search -->
+        <div class="cyber-border p-6 bg-black/50 backdrop-blur">
+            <label class="block text-xs mb-2 opacity-70">ENTER PROOF CID</label>
+            <div class="flex gap-4">
+                <input type="text" id="cidInput" placeholder="QmMock..."
+                    class="flex-1 bg-transparent border-b border-[#00ff41] focus:outline-none py-2 text-xl font-bold placeholder-green-900">
+                <button onclick="verifyCID()"
+                    class="cyber-border px-8 py-2 hover:bg-[#00ff41] hover:text-black transition-colors font-bold">
+                    VERIFY
+                </button>
+            </div>
+        </div>
+
+        <!-- Result Area -->
+        <div id="resultArea" class="hidden">
+            <div id="statusBanner" class="cyber-border p-4 mb-8 text-center text-2xl font-bold bg-[#00ff41]/10">
+                VERIFYING...
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Trace Info -->
+                <div class="cyber-border p-6 relative">
+                    <div class="absolute -top-3 left-4 bg-[#050505] px-2 text-xs">EXECUTION_TRACE</div>
+                    <pre id="traceData" class="text-xs overflow-x-auto whitespace-pre-wrap opacity-80"></pre>
+                </div>
+
+                <!-- Proof Details -->
+                <div class="space-y-4">
+                    <div class="cyber-border p-4">
+                        <div class="text-xs opacity-50 mb-1">MODEL HASH</div>
+                        <div id="modelHash" class="break-all font-bold"></div>
+                    </div>
+                    <div class="cyber-border p-4">
+                        <div class="text-xs opacity-50 mb-1">INPUT HASH</div>
+                        <div id="inputHash" class="break-all font-bold"></div>
+                    </div>
+                    <div class="cyber-border p-4">
+                        <div class="text-xs opacity-50 mb-1">TIMESTAMP</div>
+                        <div id="timestamp" class="font-bold"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Help Icon -->
+    <button onclick="toggleHelp()"
+        class="fixed bottom-8 right-8 cyber-border p-4 bg-black hover:bg-[#00ff41] hover:text-black transition-colors rounded-full z-50">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+    </button>
+
+    <!-- Help Modal -->
+    <div id="helpModal"
+        class="fixed inset-0 bg-black/90 backdrop-blur z-40 hidden flex items-center justify-center p-4">
+        <div class="cyber-border bg-[#050505] p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
+            <button onclick="toggleHelp()" class="absolute top-4 right-4 hover:text-[#ff003c]">✕ CLOSE</button>
+
+            <h2 class="text-2xl font-bold mb-6 text-[#00ff41]">SYSTEM WALKTHROUGH</h2>
+
+            <div class="space-y-6 text-sm opacity-90">
+                <section>
+                    <h3 class="font-bold text-lg mb-2 text-white">1. EXECUTE & PROVE</h3>
+                    <p>When you run a model via the CLI, SentinelRun wraps the execution. It hashes the Model and Input,
+                        captures the Output, and signs it all into a <strong>Cryptographic Proof</strong>.</p>
+                    <div class="bg-gray-900 p-2 mt-2 font-mono text-xs">
+                        $ python -m sentinel.cli run model.bin "Input" --store
+                    </div>
+                </section>
+
+                <section>
+                    <h3 class="font-bold text-lg mb-2 text-white">2. IMMUTABLE STORAGE</h3>
+                    <p>The Proof is uploaded to <strong>IPFS</strong> (InterPlanetary File System). It gets a unique
+                        Content Identifier (<strong>CID</strong>). This CID is the permanent address of that specific
+                        execution trace.</p>
+                </section>
+
+                <section>
+                    <h3 class="font-bold text-lg mb-2 text-white">3. VERIFY ANYWHERE</h3>
+                    <p>Anyone with the CID can independently verify the execution. The Verifier checks:</p>
+                    <ul class="list-disc pl-5 mt-1 space-y-1">
+                        <li>Does the hash of the trace match the signed proof?</li>
+                        <li>Was the model allowed by policy?</li>
+                        <li>Has the output been tampered with?</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3 class="font-bold text-lg mb-2 text-white">4. TRY IT NOW</h3>
+                    <p>Make sure the backend is running. Run a CLI command to get a CID. Paste the CID into the search
+                        bar on this dashboard to visualize the proof.</p>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleHelp() {
+            const modal = document.getElementById('helpModal');
+            modal.classList.toggle('hidden');
+        }
+
+        async function verifyCID() {
+            const cid = document.getElementById('cidInput').value;
+            if (!cid) return;
+
+            const resultArea = document.getElementById('resultArea');
+            const statusBanner = document.getElementById('statusBanner');
+
+            resultArea.classList.remove('hidden');
+            statusBanner.className = 'cyber-border p-4 mb-8 text-center text-2xl font-bold bg-gray-900 animate-pulse';
+            statusBanner.innerText = 'ACCESSING IPFS NETWORK...';
+
+            try {
+                const res = await fetch(`/api/proof/${cid}`);
+                if (!res.ok) throw new Error('Proof not found');
+
+                const data = await res.json();
+
+                // Update UI
+                document.getElementById('traceData').innerText = JSON.stringify(data.proof.trace, null, 2);
+                document.getElementById('modelHash').innerText = data.proof.trace.model_hash;
+                document.getElementById('inputHash').innerText = data.proof.trace.input_hash;
+                document.getElementById('timestamp').innerText = new Date(data.proof.timestamp * 1000).toLocaleString();
+
+                if (data.is_valid) {
+                    statusBanner.className = 'cyber-border p-4 mb-8 text-center text-2xl font-bold bg-[#00ff41]/20 text-[#00ff41]';
+                    statusBanner.innerText = '✓ VALID EXECUTION PROOF';
+                } else {
+                    statusBanner.className = 'cyber-border p-4 mb-8 text-center text-2xl font-bold bg-red-900/20 text-[#ff003c] border-[#ff003c]';
+                    statusBanner.innerText = '⚠ WARNING: PROOF INVALID / TAMPER DETECTED';
+                }
+
+            } catch (e) {
+                statusBanner.className = 'cyber-border p-4 mb-8 text-center text-2xl font-bold bg-red-900/20 text-[#ff003c] border-[#ff003c]';
+                statusBanner.innerText = 'ERROR: PROOF NOT FOUND';
+            }
+        }
+
+        // LIVE FEED POLLING
+        let lastSeenCid = "";
+
+        async function pollFeed() {
+            try {
+                const res = await fetch('/api/feed');
+                if (res.ok) {
+                    const events = await res.json();
+                    if (events.length > 0) {
+                        const latest = events[0];
+                        if (latest.cid !== lastSeenCid) {
+                            lastSeenCid = latest.cid;
+                            console.log("New Event Detected:", latest.cid);
+
+                            // Visual Cue
+                            const line = document.querySelector('.scan-line');
+                            line.style.background = "rgba(0, 255, 65, 0.8)";
+                            setTimeout(() => line.style.background = "rgba(0, 255, 65, 0.1)", 500);
+
+                            // Auto Verify
+                            document.getElementById('cidInput').value = latest.cid;
+                            verifyCID();
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log("Polling error (Server offline?)");
+            }
+        }
+
+        // Poll every 1 second
+        setInterval(pollFeed, 1000);
+
+        // CHECK FOR URL PARAM (Mobile Scan Support)
+        window.onload = function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const cidParam = urlParams.get('cid');
+            if (cidParam) {
+                document.getElementById('cidInput').value = cidParam;
+                verifyCID();
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+typer
+rich
+pydantic
+requests
+pytest
+qrcode
