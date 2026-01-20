@@ -7,3 +7,5 @@ requests
 pytest
 qrcode
 cryptography
+SQLAlchemy
+pyodbc
