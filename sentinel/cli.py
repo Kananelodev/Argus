@@ -14,6 +14,14 @@ from sentinel.core.proof import ProofGenerator
 app = typer.Typer(help="Argus: Decentralised AI Exec Proofs")
 console = Console()
 
+def cinematic_print(text: str, style: str = "white", delay: float = 0.02):
+    """Prints text character by character for dramatic effect."""
+    for char in text:
+        console.print(char, style=style, end="")
+        import time
+        time.sleep(delay)
+    print() # Newline
+
 @app.command()
 def run(
     model_path: str = typer.Argument(..., help="Path to the model file"),
@@ -42,6 +50,10 @@ def run(
         runtime = SecureRuntime(model_path)
         progress.update(task1, completed=True)
         
+        # Cinematic pause for video demo
+        if demo_privacy or simulate_tamper:
+             time.sleep(1.0)
+             
         task2 = progress.add_task(description="Executing Model & Generating Proof...", total=None)
         # Execute
         constraints = {"max_input_length": 2048}
