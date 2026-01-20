@@ -19,7 +19,8 @@ def run(
     model_path: str = typer.Argument(..., help="Path to the model file"),
     input_data: str = typer.Argument(..., help="Input prompt/data for the model"),
     store: bool = typer.Option(True, help="Store proof to IPFS"),
-    simulate_tamper: bool = typer.Option(False, help="Simulate a man-in-the-middle attack for demo")
+    simulate_tamper: bool = typer.Option(False, help="Simulate a man-in-the-middle attack for demo"),
+    demo_privacy: bool = typer.Option(False, help="Enable Privacy/ZKP mode for demo")
 ):
     """
     Execute an AI task securely and generate a proof.
@@ -43,13 +44,21 @@ def run(
         
         task2 = progress.add_task(description="Executing Model & Generating Proof...", total=None)
         # Execute
-        constraints = {"max_input_length": 2048} # Default constraints
+        constraints = {"max_input_length": 2048}
+        
+        if demo_privacy:
+            constraints["privacy"] = {
+                "min_score": 700,
+                "min_income": 40000,
+                "age_limit": 18
+            }
+            
         proof = runtime.execute(input_data, constraints)
         progress.update(task2, completed=True)
 
     if simulate_tamper:
         console.print("[bold yellow]![/bold yellow] Simulating Tampering Attack...", style="yellow")
-        proof['trace']['output'] = "Evildoer was here"
+        proof['credentialSubject']['executionTrace']['output'] = "Evildoer was here"
         # Note: We modified the trace content but NOT the trace_hash in the proof wrapping
         # This will cause verification to fail because hash(trace) != proof.trace_hash
 
@@ -68,7 +77,7 @@ def run(
         # BROADCAST TO LOCAL SERVER IF AVAILABLE
         try:
             import requests
-            payload = {"cid": cid, "model_hash": proof['trace']['model_hash'], "type": "execution_proof"}
+            payload = {"cid": cid, "model_hash": proof['credentialSubject']['executionTrace']['model_hash'], "type": "execution_proof"}
             try:
                 requests.post("http://127.0.0.1:8000/api/broadcast", json=payload, timeout=0.1)
                 # console.print("[dim]Broadcasted to Live Dashboard[/dim]")

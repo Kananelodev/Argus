@@ -33,7 +33,7 @@ else:
 
 # 4. Tamper
 print("4. Testing Tamper Detection...")
-proof['trace']['output'] = "HACKED output that doesn't match hash"
+proof['credentialSubject']['executionTrace']['output'] = "HACKED output that doesn't match hash"
 # We save this tampered proof. The 'trace_hash' in the proof object 
 # still matches the OLD trace, but the 'trace' content is new.
 tampered_cid = storage.save_proof(proof)

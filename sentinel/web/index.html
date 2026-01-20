@@ -100,6 +100,13 @@
                         <div class="text-xs opacity-50 mb-1">INPUT HASH</div>
                         <div id="inputHash" class="break-all font-bold"></div>
                     </div>
+
+                    <!-- ZK Proofs Section -->
+                    <div id="zkpSection" class="hidden cyber-border p-4 border-dashed">
+                        <div class="text-xs opacity-50 mb-1 text-yellow-400">ZERO-KNOWLEDGE PROOFS</div>
+                        <ul id="zkpList" class="text-sm list-disc pl-4 space-y-1"></ul>
+                    </div>
+
                     <div class="cyber-border p-4">
                         <div class="text-xs opacity-50 mb-1">TIMESTAMP</div>
                         <div id="timestamp" class="font-bold"></div>
@@ -187,11 +194,12 @@
 
                 const data = await res.json();
 
-                // Update UI
-                document.getElementById('traceData').innerText = JSON.stringify(data.proof.trace, null, 2);
-                document.getElementById('modelHash').innerText = data.proof.trace.model_hash;
-                document.getElementById('inputHash').innerText = data.proof.trace.input_hash;
-                document.getElementById('timestamp').innerText = new Date(data.proof.timestamp * 1000).toLocaleString();
+                // Update UI - VC Format Support
+                const trace = data.proof.credentialSubject.executionTrace;
+                document.getElementById('traceData').innerText = JSON.stringify(trace, null, 2);
+                document.getElementById('modelHash').innerText = trace.model_hash;
+                document.getElementById('inputHash').innerText = trace.input_hash;
+                document.getElementById('timestamp').innerText = new Date(data.proof.issuanceDate).toLocaleString();
 
                 if (data.is_valid) {
                     statusBanner.className = 'cyber-border p-4 mb-8 text-center text-2xl font-bold bg-[#00ff41]/20 text-[#00ff41]';
@@ -199,6 +207,16 @@
                 } else {
                     statusBanner.className = 'cyber-border p-4 mb-8 text-center text-2xl font-bold bg-red-900/20 text-[#ff003c] border-[#ff003c]';
                     statusBanner.innerText = '⚠ WARNING: PROOF INVALID / TAMPER DETECTED';
+                }
+
+                // ZKP Render
+                const zkpSection = document.getElementById('zkpSection');
+                const zkpList = document.getElementById('zkpList');
+                if (trace.zkp_proofs && trace.zkp_proofs.length > 0) {
+                    zkpSection.classList.remove('hidden');
+                    zkpList.innerHTML = trace.zkp_proofs.map(p => `<li>${p}</li>`).join('');
+                } else {
+                    zkpSection.classList.add('hidden');
                 }
 
             } catch (e) {

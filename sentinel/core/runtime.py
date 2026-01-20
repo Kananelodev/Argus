@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional, Dict, Any
 from .hasher import ModelHasher
-from .constraints import ConstraintEngine
+from .constraints import ConstraintEngine, PrivacyEngine
 from .proof import ProofGenerator
 import time
 
@@ -13,6 +13,7 @@ class SecureRuntime:
         
         # Calculate model hash on initialization to "lock" it
         self.model_hash = ModelHasher.hash_file(self.model_path)
+        self.proof_generator = ProofGenerator()
         
     def execute(self, input_data: str, constraints: Dict[str, Any] = {}) -> Dict[str, Any]:
         """
@@ -21,35 +22,41 @@ class SecureRuntime:
         """
         start_time = time.time()
         
-        # 1. Input Hashing
+        # 1. Input Hashing (Hash the ORIGINAL input to bind the proof to it privately)
         input_hash = ModelHasher.hash_string(input_data)
         
-        # 2. Constraint Checking
+        # 2. Constraint & Privacy Checking
         constraint_engine = ConstraintEngine(constraints)
-        # Validate model is allowed (if policy exists)
         constraint_engine.validate_model(self.model_hash)
-        # Validate input
         constraint_engine.validate_input(input_data)
         
+        # Privacy: Redact sensitive data if privacy rules exist
+        redacted_input = input_data
+        zkp_proofs = []
+        if "privacy" in constraints:
+            redacted_input, zkp_proofs = PrivacyEngine.apply_privacy_rules(input_data, constraints["privacy"])
+        
         # 3. Execution (Simulated for MVP)
-        # In a real scenario, this would call the actual model inference
-        # For now, we simulate work
+        # We use ORIGINAL input for execution (the model sees the data), 
+        # but the PROOF will only see redacted data.
         time.sleep(0.1) 
         
         # SMART SIMULATION FOR DEMO SCENARIOS
-        if "Credit Score" in input_data:
-            output = "SYS: LOAN_APPROVED | SCORE: 98.2 | REASON: Strong Credit History & Income Ratio | LIMIT: $25,000"
+        if "Credit Score" in input_data or "score" in input_data:
+            output = "SYS: LOAN_APPROVED | SCORE: Verified > Threshold | REASON: Strong Credit History"
         elif "Chest Pain" in input_data:
             output = "TRIAGE: PRIORITY_1_RED | ACTION: IMMEDIATE_ER_ADMISSION | SUSPICION: ACUTE_CORONARY_SYNDROME"
         else:
-            output = f"Processed [{input_data}] by model [{self.model_hash[:8]}...]"
+            output = f"Processed request by model [{self.model_hash[:8]}...]"
         
         execution_time = time.time() - start_time
         
         # 4. Generate Trace
         trace = {
             "model_hash": self.model_hash,
-            "input_hash": input_hash,
+            "input_hash": input_hash, # Helper: can verify if you have original data
+            "public_input": redacted_input, # Safe to share
+            "zkp_proofs": zkp_proofs,
             "constraints": constraints,
             "output": output,
             "execution_time_ms": int(execution_time * 1000),
@@ -57,6 +64,6 @@ class SecureRuntime:
         }
         
         # 5. Generate Proof
-        proof = ProofGenerator.generate_proof(trace)
+        proof = self.proof_generator.generate_proof(trace)
         
         return proof
