@@ -9,6 +9,29 @@ Argus is a **verifiable execution proof system** for AI models. It wraps model e
 
 ---
 
+## Hackathon Focus Alignment 🏆
+**Track: Identity & Privacy**
+
+Argus implementations the following core technologies:
+
+1.  **Self-Sovereign Identity (SSI)**:
+    *   **Implementation**: The Sentinel Node operates as an autonomous agent with its own `did:key` identifier.
+    *   **Code**: `sentinel/core/identity.py` (Ed25519 Key Generation).
+
+2.  **Verifiable Credentials (VCs)**:
+    *   **Implementation**: Execution traces are wrapped in W3C-compliant JSON-LD Verifiable Credentials.
+    *   **Code**: `sentinel/core/proof.py` (VC Structure & Signing).
+
+3.  **Decentralized Identifiers (DIDs)**:
+    *   **Implementation**: We use the `did:key` method for root-of-trust without centralized registries.
+    *   **Code**: `issuer: did:key:...` in every proof.
+
+4.  **Zero-Knowledge Proofs (ZKP)**:
+    *   **Implementation**: The `PrivacyEngine` enables predicate verification (e.g., "Score > 700") without revealing raw data.
+    *   **Code**: `sentinel/core/constraints.py` (Privacy Predicates).
+
+---
+
 ## 🚀 Quick Start
 
 ### 1. Installation

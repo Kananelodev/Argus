@@ -15,7 +15,7 @@ class SecureRuntime:
         self.model_hash = ModelHasher.hash_file(self.model_path)
         self.proof_generator = ProofGenerator()
         
-    def execute(self, input_data: str, constraints: Dict[str, Any] = {}) -> Dict[str, Any]:
+    def execute(self, input_data: str, constraints: Dict[str, Any] = {}, metadata: Dict[str, Any] = {}) -> Dict[str, Any]:
         """
         Executes the model with the given input and constraints.
         Returns a Cryptographic Proof of execution.
@@ -62,6 +62,9 @@ class SecureRuntime:
             "execution_time_ms": int(execution_time * 1000),
             "executed_at": time.time()
         }
+        
+        # Merge metadata (e.g. model_name)
+        trace.update(metadata)
         
         # 5. Generate Proof
         proof = self.proof_generator.generate_proof(trace)

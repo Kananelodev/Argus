@@ -15,6 +15,7 @@ class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     username = Column(String, unique=True)
+    password_hash = Column(String) # Simple hash for demo
     full_name = Column(String)
     role = Column(String) # "TRADER", "RISK_OFFICER", "AUDITOR"
     department_id = Column(Integer, ForeignKey('departments.id'))
@@ -55,10 +56,14 @@ def init_db():
         risk_dept = db.query(Department).filter_by(name="Risk Management").first()
         trading_dept = db.query(Department).filter_by(name="High Frequency Trading").first()
         
+        # Default password for everyone: "password123"
+        # In real app: use bcrypt
+        default_pw = "password123" 
+        
         users = [
-            User(username="alice_risk", full_name="Alice Chen", role="RISK_OFFICER", department=risk_dept, did="did:key:z6Mk...Alice"),
-            User(username="bob_trader", full_name="Bob Smith", role="TRADER", department=trading_dept, did="did:key:z6Mk...Bob"),
-            User(username="charlie_audit", full_name="Charlie Davis", role="AUDITOR", department=risk_dept, did="did:key:z6Mk...Charlie")
+            User(username="alice_risk", password_hash=default_pw, full_name="Alice Chen", role="RISK_OFFICER", department=risk_dept, did="did:key:z6Mk...Alice"),
+            User(username="bob_trader", password_hash=default_pw, full_name="Bob Smith", role="TRADER", department=trading_dept, did="did:key:z6Mk...Bob"),
+            User(username="charlie_audit", password_hash=default_pw, full_name="Charlie Davis", role="AUDITOR", department=risk_dept, did="did:key:z6Mk...Charlie")
         ]
         db.add_all(users)
         db.commit()

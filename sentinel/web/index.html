@@ -56,9 +56,15 @@
             <h1 class="text-4xl font-bold tracking-tighter">ARGUS_EYE</h1>
             <p class="text-xs opacity-70">TRUST NOTHING. SEE EVERYTHING.</p>
         </div>
-        <div class="text-xs text-right opacity-70">
-            SYSTEM: <span class="text-green-400 animate-pulse">WATCHING</span><br>
-            NODE: LOCALHOST
+        <div class="text-right">
+            <a href="/"
+                class="cyber-button text-xs px-4 py-2 mb-2 inline-block hover:bg-[#00ff41] hover:text-black transition-colors">
+                SILVERLOCK PORTAL
+            </a>
+            <div class="text-xs opacity-70">
+                SYSTEM: <span class="text-green-400 animate-pulse">WATCHING</span><br>
+                NODE: LOCALHOST
+            </div>
         </div>
     </header>
 
@@ -91,9 +97,29 @@
 
                 <!-- Proof Details -->
                 <div class="space-y-4">
+                    <!-- Identity Layer Visualization -->
+                    <div class="cyber-border p-4 bg-blue-900/10 border-blue-500/50">
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="text-xs text-blue-400 font-bold">SELF-SOVEREIGN IDENTITY (DID)</div>
+                            <div class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 text-[10px] font-bold">W3C
+                                COMPLIANT</div>
+                        </div>
+                        <div class="text-[10px] opacity-70 mb-1">ISSUER (SENTINEL NODE)</div>
+                        <div id="issuerDid" class="font-mono text-xs break-all text-white">Loading...</div>
+                    </div>
+
                     <div class="cyber-border p-4">
-                        <div class="text-xs opacity-50 mb-1">MODEL HASH</div>
-                        <div id="modelHash" class="break-all font-bold"></div>
+                        <div class="text-xs opacity-50 mb-1">MODEL NAME</div>
+                        <div id="modelName" class="font-bold text-white"></div>
+                        <div class="text-xs opacity-50 mb-1 mt-2">MODEL HASH</div>
+                        <div id="modelHash" class="break-all font-mono text-xs opacity-70"></div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="flex flex-col text-right">
+                            <span class="text-xs text-[#00ff41] font-bold">NODE STATUS</span>
+                            <span class="text-xs text-white opacity-80 blink">ONLINE_SECURE</span>
+                        </div>
+                        <div class="w-2 h-2 rounded-full bg-[#00ff41] shadow-[0_0_10px_#00ff41]"></div>
                     </div>
                     <div class="cyber-border p-4">
                         <div class="text-xs opacity-50 mb-1">INPUT HASH</div>
@@ -101,9 +127,14 @@
                     </div>
 
                     <!-- ZK Proofs Section -->
-                    <div id="zkpSection" class="hidden cyber-border p-4 border-dashed">
-                        <div class="text-xs opacity-50 mb-1 text-yellow-400">ZERO-KNOWLEDGE PROOFS</div>
-                        <ul id="zkpList" class="text-sm list-disc pl-4 space-y-1"></ul>
+                    <div id="zkpSection"
+                        class="hidden cyber-border p-4 border-dashed bg-yellow-900/10 border-yellow-500/50">
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="text-xs text-yellow-400 font-bold">ZERO-KNOWLEDGE PROOFS</div>
+                            <div class="px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-300 text-[10px] font-bold">
+                                PRIVACY PRESERVED</div>
+                        </div>
+                        <ul id="zkpList" class="text-sm list-disc pl-4 space-y-1 text-white"></ul>
                     </div>
 
                     <div class="cyber-border p-4">
@@ -167,6 +198,30 @@
                         bar on this dashboard to visualize the proof.</p>
                 </section>
             </div>
+
+            <!-- Hackathon Checklist for Demo -->
+            <div class="mt-8 pt-8 border-t border-gray-800">
+                <h3 class="font-bold text-lg mb-4 text-[#00ff41]">HACKATHON TRACK ALIGNMENT (IDENTITY & PRIVACY)</h3>
+                <div class="grid grid-cols-2 gap-4 text-xs font-mono">
+                    <div class="bg-green-900/20 p-3 border border-green-900 rounded">
+                        <div class="font-bold text-white mb-1">✓ SSI & DIDs</div>
+                        <div class="opacity-70">Agent-centric identity using `did:key` (Ed25519). No central server.
+                        </div>
+                    </div>
+                    <div class="bg-green-900/20 p-3 border border-green-900 rounded">
+                        <div class="font-bold text-white mb-1">✓ Verifiable Credentials</div>
+                        <div class="opacity-70">W3C-compliant JSON-LD proofs with cryptographic signatures.</div>
+                    </div>
+                    <div class="bg-green-900/20 p-3 border border-green-900 rounded">
+                        <div class="font-bold text-white mb-1">✓ Zero-Knowledge Proofs</div>
+                        <div class="opacity-70">Privacy-preserving attribute verification (e.g. "Age > 18").</div>
+                    </div>
+                    <div class="bg-green-900/20 p-3 border border-green-900 rounded">
+                        <div class="font-bold text-white mb-1">✓ Interoperability</div>
+                        <div class="opacity-70">Standardized schemas for broad ecosystem compatibility.</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -196,6 +251,8 @@
                 // Update UI - VC Format Support
                 const trace = data.proof.credentialSubject.executionTrace;
                 document.getElementById('traceData').innerText = JSON.stringify(trace, null, 2);
+                document.getElementById('issuerDid').innerText = data.proof.issuer; // Show DID
+                document.getElementById('modelName').innerText = trace.model_name || "Unknown Model";
                 document.getElementById('modelHash').innerText = trace.model_hash;
                 document.getElementById('inputHash').innerText = trace.input_hash;
                 document.getElementById('timestamp').innerText = new Date(data.proof.issuanceDate).toLocaleString();

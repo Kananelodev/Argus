@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SilverLock Financial // Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0f;
+            color: #e0e0e0;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Glassmorphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00C853 0%, #009624 100%);
+            color: black;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 200, 83, 0.3);
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col">
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="flex-1 flex items-center justify-center p-4">
+        <div class="glass p-8 rounded-2xl w-full max-w-md space-y-6">
+            <div class="text-center space-y-2">
+                <div class="inline-block p-3 rounded-full bg-green-900/20 mb-2">
+                    <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.2-2.858.5-4m1.5 8l1-1">
+                        </path>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold text-white">SilverLock Portal</h1>
+                <p class="text-sm text-gray-400">Employee Identification</p>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1 mono">USERNAME</label>
+                    <input type="text" id="usernameInput" value="alice_risk"
+                        class="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-white focus:border-green-500 focus:outline-none transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1 mono">PASSWORD</label>
+                    <input type="password" id="passwordInput"
+                        class="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-white focus:border-green-500 focus:outline-none transition-colors"
+                        placeholder="••••••••">
+                </div>
+                <button onclick="login()" class="w-full btn-primary py-3 rounded-lg">CONNECT IDENTITY</button>
+            </div>
+
+            <p id="loginError" class="text-red-500 text-xs text-center hidden">Access Denied: Invalid Credentials</p>
+
+            <div class="text-xs text-center text-gray-600 mt-8">
+                Secured by ARGUS Verification Node
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="appScreen" class="hidden flex-1 flex flex-col">
+        <!-- Header -->
+        <header class="glass border-b border-gray-800 p-4 sticky top-0 z-50">
+            <div class="max-w-6xl mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded bg-gradient-to-br from-green-400 to-blue-600"></div>
+                    <div>
+                        <h2 class="font-bold text-white leading-none">SilverLock</h2>
+                        <span class="text-[10px] text-gray-400 mono tracking-widest">INTERNAL</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="/dashboard" target="_blank"
+                        class="text-xs text-green-400 hover:text-green-300 mono border border-green-900 px-2 py-1 rounded hidden md:block">OPEN
+                        DASHBOARD ↗</a>
+                    <div class="text-right hidden md:block">
+                        <div id="userFullName" class="text-sm font-semibold text-white">Alice Chen</div>
+                        <div id="userRole" class="text-xs text-green-400 mono">RISK_OFFICER</div>
+                    </div>
+                    <button onclick="logout()" class="text-xs text-gray-500 hover:text-white">SIGNOUT</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 max-w-6xl w-full mx-auto p-4 md:p-8 space-y-8">
+
+            <!-- Quick Actions -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="glass p-6 rounded-xl hover:bg-white/5 transition cursor-pointer group"
+                    onclick="openRequestModal()">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="bg-blue-500/20 p-2 rounded text-blue-400 group-hover:text-blue-300">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-xs font-bold bg-blue-500/20 text-blue-400 px-2 py-1 rounded">NEW</span>
+                    </div>
+                    <h3 class="font-bold text-lg text-white">Run Analysis</h3>
+                    <p class="text-sm text-gray-400 mt-1">Execute AI model with verification trace.</p>
+                </div>
+
+                <div class="glass p-6 rounded-xl">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="bg-purple-500/20 p-2 rounded text-purple-400">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="text-2xl font-bold text-white mono" id="verifiedCount">0</div>
+                    </div>
+                    <h3 class="font-bold text-lg text-white">Verified Requests</h3>
+                    <p class="text-sm text-gray-400 mt-1">Cryptographically proven actions.</p>
+                </div>
+            </div>
+
+            <!-- Recent Activity Table -->
+            <div class="space-y-4">
+                <div class="flex justify-between items-end">
+                    <h3 class="font-bold text-xl text-white">Request History</h3>
+                    <button onclick="fetchRequests()"
+                        class="text-xs text-green-400 hover:text-green-300 flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                            </path>
+                        </svg>
+                        REFRESH
+                    </button>
+                </div>
+
+                <div class="glass rounded-xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-white/5 text-gray-400 font-mono text-xs uppercase">
+                                <tr>
+                                    <th class="p-4">Request ID</th>
+                                    <th class="p-4">Model</th>
+                                    <th class="p-4">Context</th>
+                                    <th class="p-4">Status</th>
+                                    <th class="p-4">Proof</th>
+                                </tr>
+                            </thead>
+                            <tbody id="requestTableBody" class="text-gray-300 divide-y divide-gray-800">
+                                <!-- Requests go here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="emptyState" class="p-8 text-center text-gray-500 hidden">
+                        No requests found. Start a new analysis.
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAL -->
+    <div id="requestModal"
+        class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass bg-[#1a1a20] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+            <div class="p-6 border-b border-gray-800 flex justify-between items-center">
+                <h3 class="font-bold text-white text-lg">New Analysis Request</h3>
+                <button onclick="closeRequestModal()" class="text-gray-500 hover:text-white">✕</button>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1 mono">MODEL</label>
+                    <select id="modelSelect"
+                        class="w-full bg-black/30 border border-gray-700 rounded-lg p-3 text-white focus:border-green-500 focus:outline-none">
+                        <option value="credit_risk_v2">Credit Risk Assessment v2</option>
+                        <option value="fraud_detect_v1">Fraud Detection v1 (Legacy)</option>
+                        <option value="compliance_check">Regulatory Compliance Check</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1 mono">INPUT CONTEXT (JSON)</label>
+                    <textarea id="inputContext" rows="4"
+                        class="w-full bg-black/30 border border-gray-700 rounded-lg p-3 text-white mono text-xs focus:border-green-500 focus:outline-none"
+                        placeholder='{"applicant_id": "8823", "loan_amount": 500000}'></textarea>
+                </div>
+            </div>
+
+            <div class="p-6 border-t border-gray-800 bg-black/20 flex justify-end gap-3">
+                <button onclick="closeRequestModal()"
+                    class="px-4 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5">Cancel</button>
+                <button onclick="submitRequest()" class="px-6 py-2 rounded-lg btn-primary">SUBMIT REQUEST</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- AUTH ---
+        let currentUser = null;
+
+        async function login() {
+            const username = document.getElementById('usernameInput').value;
+            const password = document.getElementById('passwordInput').value || 'password123'; // Default for demo convenience
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (!res.ok) throw new Error('Login failed');
+
+                currentUser = await res.json();
+
+                // Switch Screens
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('appScreen').classList.remove('hidden');
+
+                // Update Header
+                document.getElementById('userFullName').innerText = currentUser.full_name;
+                document.getElementById('userRole').innerText = currentUser.role;
+
+                // Load Data
+                fetchRequests();
+
+            } catch (e) {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            location.reload();
+        }
+
+        // --- DASHBOARD ---
+        async function fetchRequests() {
+            if (!currentUser) return;
+
+            const res = await fetch(`/api/requests?username=${currentUser.username}`);
+            const requests = await res.json();
+
+            const tbody = document.getElementById('requestTableBody');
+            tbody.innerHTML = '';
+
+            let verifiedCount = 0;
+
+            if (requests.length === 0) {
+                document.getElementById('emptyState').classList.remove('hidden');
+            } else {
+                document.getElementById('emptyState').classList.add('hidden');
+
+                requests.forEach(req => {
+                    if (req.status === 'VERIFIED') verifiedCount++;
+
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-white/5 transition';
+                    tr.innerHTML = `
+                        <td class="p-4 mono text-xs opacity-70">${req.req_uuid.substring(0, 8)}...</td>
+                        <td class="p-4 font-semibold text-white">${req.model_name}</td>
+                        <td class="p-4 text-xs font-mono max-w-xs truncate">${req.input_context}</td>
+                        <td class="p-4">
+                            <span class="px-2 py-1 rounded text-[10px] font-bold ${getStatusColor(req.status)}">
+                                ${req.status}
+                            </span>
+                        </td>
+                        <td class="p-4">
+                            ${req.proof_cid ? `<a href="/dashboard?cid=${req.proof_cid}" target="_blank" class="text-blue-400 hover:underline text-xs">VIEW PROOF ↗</a>` : '<span class="opacity-30">-</span>'}
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            document.getElementById('verifiedCount').innerText = verifiedCount;
+        }
+
+        function getStatusColor(status) {
+            if (status === 'PENDING') return 'bg-yellow-500/20 text-yellow-400';
+            if (status === 'VERIFIED') return 'bg-green-500/20 text-green-400';
+            if (status === 'FLAGGED') return 'bg-red-500/20 text-red-500';
+            return 'bg-gray-500/20 text-gray-400';
+        }
+
+        // --- REQUESTS ---
+        function openRequestModal() {
+            document.getElementById('requestModal').classList.remove('hidden');
+        }
+
+        function closeRequestModal() {
+            document.getElementById('requestModal').classList.add('hidden');
+        }
+
+        async function submitRequest() {
+            const model_name = document.getElementById('modelSelect').value;
+            const input_context = document.getElementById('inputContext').value;
+
+            try {
+                const res = await fetch('/api/request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: currentUser.username,
+                        model_name,
+                        input_context
+                    })
+                });
+
+                if (res.ok) {
+                    closeRequestModal();
+                    fetchRequests(); // Refresh
+                }
+            } catch (e) {
+                alert("Failed to submit request");
+            }
+        }
+    </script>
+</body>
+
+</html>

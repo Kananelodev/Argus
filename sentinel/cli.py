@@ -6,6 +6,8 @@ from rich.json import JSON
 from rich.progress import Progress, SpinnerColumn, TextColumn
 import json
 import os
+import time
+import requests
 from pathlib import Path
 from sentinel.core.runtime import SecureRuntime
 from sentinel.storage.ipfs import IPFSStorage
@@ -18,7 +20,6 @@ def cinematic_print(text: str, style: str = "white", delay: float = 0.02):
     """Prints text character by character for dramatic effect."""
     for char in text:
         console.print(char, style=style, end="")
-        import time
         time.sleep(delay)
     print() # Newline
 
@@ -38,6 +39,9 @@ def run(
         raise typer.Exit(code=1)
 
     console.print(Panel(f"[bold green]Argus Secure Runtime[/bold green]\nTarget Model: {model_path}\nInput: {input_data}", border_style="green"))
+
+    # Initialize Trace Variables
+    proof = None
 
     with Progress(
         SpinnerColumn(),
@@ -72,7 +76,6 @@ def run(
         console.print("[bold yellow]![/bold yellow] Simulating Tampering Attack...", style="yellow")
         proof['credentialSubject']['executionTrace']['output'] = "Evildoer was here"
         # Note: We modified the trace content but NOT the trace_hash in the proof wrapping
-        # This will cause verification to fail because hash(trace) != proof.trace_hash
 
     # Display Proof
     console.print("\n[bold cyan]Execution Complete. Proof Generated:[/bold cyan]")
@@ -88,11 +91,9 @@ def run(
         
         # BROADCAST TO LOCAL SERVER IF AVAILABLE
         try:
-            import requests
             payload = {"cid": cid, "model_hash": proof['credentialSubject']['executionTrace']['model_hash'], "type": "execution_proof"}
             try:
                 requests.post("http://127.0.0.1:8000/api/broadcast", json=payload, timeout=0.1)
-                # console.print("[dim]Broadcasted to Live Dashboard[/dim]")
             except:
                 pass # Fail silently if dashboard is not running
         except ImportError:
@@ -104,8 +105,6 @@ def run(
             import io
             import socket
             
-            # Auto-detect local IP for mobile scanning
-            # This allows a phone on the same WiFi to reach the laptop
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 s.connect(("8.8.8.8", 80))
@@ -115,16 +114,14 @@ def run(
                 local_ip = "127.0.0.1"
 
             # Point to the Web Dashboard (User Interface), not the raw API JSON
-            qr_data = f"http://{local_ip}:8000/?cid={cid}" 
+            qr_data = f"http://{local_ip}:8000/dashboard?cid={cid}" 
             
             qr = qrcode.QRCode()
             qr.add_data(qr_data)
             f = io.StringIO()
-            # invert=True is often better for dark terminal backgrounds
             qr.print_ascii(out=f, invert=True)
             f.seek(0)
             
-            # Print URL explicitly for backup
             console.print(Panel(
                 f"[bold]Mobile Verification[/bold]\n"
                 f"Scan the code below or visit:\n[bold blue]{qr_data}[/bold blue]\n\n"
@@ -134,7 +131,99 @@ def run(
             ))
         except ImportError:
             pass
+
+@app.command()
+def start_node(
+    api_url: str = "http://127.0.0.1:8000",
+    interval: float = 3.0
+):
+    """
+    Starts the Sentinel Node in autonomous mode. 
+    Polls the API for pending verification requests and processes them.
+    """
+    console.clear()
+    console.print(Panel.fit("[bold green]ARGUS SENTINEL NODE[/bold green]\n[dim]Autonomous Verification Agent v1.0[/dim]"))
+    
+    runtime = SecureRuntime("/home/wethinkcode/Argus/privacy_model.bin") # Default model
+    
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+        transient=False,
+    ) as progress:
+        task = progress.add_task(description="Syncing with SilverLock Network...", total=None)
         
+        while True:
+            try:
+                # 1. Fetch Queue
+                try:
+                    res = requests.get(f"{api_url}/api/queue")
+                    queue = res.json()
+                except Exception:
+                    progress.update(task, description="[red]Connection Lost. Retrying...[/red]")
+                    time.sleep(interval)
+                    continue
+                
+                if not queue:
+                    progress.update(task, description=f"[dim]Node Idle - Listening for requests... ({time.strftime('%H:%M:%S')})[/dim]")
+                    time.sleep(interval)
+                    continue
+                
+                # 2. Process Job
+                job = queue[0] # FIFO
+                progress.update(task, description=f"[bold green]PROCESSING REQUEST[/bold green] [white]{job['req_uuid'][:8]}[/white]")
+                
+                cinematic_print(f" >> Received Job: {job['input_context']}")
+                cinematic_print(f" >> Initializing Execution Environment...")
+                
+                # Execute
+                constraints = {
+                    "max_input_length": 2048,
+                    "privacy": {  # Enable Privacy/ZKP by default for the demo node
+                        "min_score": 700,
+                        "min_income": 40000,
+                        "age_limit": 18
+                    }
+                }
+                input_data = job['input_context']
+                
+                # Pass metadata (model_name) to be included in the signed trace
+                proof_data = runtime.execute(input_data, constraints, metadata={"model_name": job['model_name']})
+                
+                try:
+                    storage = IPFSStorage()
+                    cid = storage.save_proof(proof_data)
+                    
+                    # Broadcast to feed (MUST include CID)
+                    broadcast_payload = {
+                        "cid": cid,
+                        "type": "execution_proof",
+                        "model_hash": proof_data['credentialSubject']['executionTrace']['model_hash']
+                    }
+                    requests.post(f"{api_url}/api/broadcast", json=broadcast_payload)
+                    
+                    # 4. Complete Request
+                    payload = {
+                        "req_uuid": job['req_uuid'],
+                        "proof_cid": cid,
+                        "status": "VERIFIED"
+                    }
+                    requests.post(f"{api_url}/api/complete", json=payload)
+                    
+                    cinematic_print(f" >> [green]✓ PROOF GENERATED & BROADCAST[/green]")
+                    cinematic_print(f" >> CID: {cid}\n")
+                    
+                except Exception as e:
+                    console.print(f"[red]Failed to sync result: {e}[/red]")
+                
+            except KeyboardInterrupt:
+                console.print("\n[yellow]Shutting down Sentinel Node...[/yellow]")
+                break
+            except Exception as e:
+                console.print(f"[red]Critical Error: {e}[/red]")
+                time.sleep(5)
+
 @app.command()
 def verify(cid: str = typer.Argument(..., help="IPFS CID or Path to proof JSON")):
     """

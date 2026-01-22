@@ -55,18 +55,32 @@ class RequestCreate(BaseModel):
 
 class LoginRequest(BaseModel):
     username: str
+    password: str
 
 # --- API Routes ---
 
 @app.get("/")
 async def read_root():
+    return FileResponse(web_dir / "portal.html")
+
+@app.get("/dashboard")
+async def read_dashboard():
     return FileResponse(web_dir / "index.html")
+
+@app.get("/portal")
+async def read_portal_alias():
+     return FileResponse(web_dir / "portal.html")
 
 @app.post("/api/login")
 async def login(login_req: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == login_req.username).first()
     if not user:
-        raise HTTPException(status_code=401, detail="User not found")
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Simple password check (In prod use bcrypt.checkpw)
+    if user.password_hash != login_req.password:
+         raise HTTPException(status_code=401, detail="Invalid credentials")
+         
     return {"id": user.id, "username": user.username, "role": user.role, "full_name": user.full_name, "department": user.department.name}
 
 @app.post("/api/request")
@@ -102,6 +116,34 @@ async def get_my_requests(username: str, db: Session = Depends(get_db)):
         reqs = db.query(VerificationRequest).filter(VerificationRequest.requester_id == user.id).all()
         
     return reqs
+
+@app.get("/api/queue")
+async def get_pending_queue(db: Session = Depends(get_db)):
+    """
+    Endpoint for the Sentinel Node to fetch pending verification requests.
+    """
+    # Fetch all PENDING requests
+    reqs = db.query(VerificationRequest).filter(VerificationRequest.status == "PENDING").all()
+    return reqs
+
+class CompletionRequest(BaseModel):
+    req_uuid: str
+    proof_cid: str
+    status: str = "VERIFIED"
+
+@app.post("/api/complete")
+async def complete_request(data: CompletionRequest, db: Session = Depends(get_db)):
+    """
+    Endpoint for Sentinel Node to report completion.
+    """
+    req = db.query(VerificationRequest).filter(VerificationRequest.req_uuid == data.req_uuid).first()
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+    
+    req.status = data.status
+    req.proof_cid = data.proof_cid
+    db.commit()
+    return {"status": "updated"}
 
 @app.post("/api/broadcast")
 async def broadcast_proof(data: dict):
